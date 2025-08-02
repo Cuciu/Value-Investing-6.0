@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Investment Analysis Results</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .chart-container {
+            width: 80%;
+            margin: 30px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Investment Analysis Results</h1>
+
+    <!-- Results Table -->
+    <table>
+        <thead>
+            <tr>
+                {% for col in columnNames %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for cell in row %}
+                        <td>
+                            {% if cell is string and '\n' in cell %}
+                                {% for line in cell.split('\n') %}
+                                    {{ line }}<br>
+                                {% endfor %}
+                            {% else %}
+                                {{ cell }}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Overpriced Bar Chart -->
+    {% if graphdata and graphdata[0]|length > 1 %}
+    <div class="chart-container">
+        <canvas id="overpricedChart"></canvas>
+    </div>
+
+    <script>
+        const labels = {{ graphdata[0][1:] | tojson }};
+        const datasets = [];
+        for (let i = 1; i < {{ graphdata | length }}; i++) {
+            datasets.push({
+                label: {{ graphdata[i][0] | tojson }},
+                data: {{ graphdata[i][1:] | tojson }},
+                borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                fill: false
+            });
+        }
+
+        const ctx = document.getElementById('overpricedChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ graphdata[0][1:] | tojson }},
+                datasets: datasets.map(d => ({
+                    label: d.label,
+                    data: d.data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }))
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Overpriced % by Stock'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Overpriced %'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+
+</body>
+</html>
